@@ -192,6 +192,54 @@ class TestCliUsersExportImport:
         assert len(data) == 2
 
 
+class TestCliPermissionPreservation:
+    """Verify _safe_write preserves the original file permissions."""
+
+    def test_permissions_preserved_after_add(self, tmp_path: Path) -> None:
+        defs = [
+            FieldDef("UserID", TYPE_INTEGER, False),
+            FieldDef("Enabled", TYPE_BOOLEAN, False),
+            FieldDef("Name", TYPE_STRING, False),
+            FieldDef("Password", TYPE_STRING, False),
+            FieldDef("RoleID", TYPE_INTEGER, False),
+            FieldDef("Description", TYPE_STRING, True),
+        ]
+        rows = [
+            {
+                "UserID": 1,
+                "Enabled": True,
+                "Name": "admin",
+                "Password": get_password_hash(1, "pass"),
+                "RoleID": 1,
+                "Description": "",
+            },
+        ]
+        table = BaseTable(defs, rows)
+        path = tmp_path / "user.dat"
+        table.save(path)
+
+        import os
+
+        os.chmod(path, 0o644)
+        original_mode = os.stat(path).st_mode
+
+        result = run_cli("users", str(path), "add", "--name", "newuser", "--password", "pass")
+        assert result.returncode == 0
+        assert os.stat(path).st_mode == original_mode
+
+    def test_permissions_preserved_after_passwd(self, cli_dat_path: Path) -> None:
+        import os
+
+        os.chmod(cli_dat_path, 0o644)
+        original_mode = os.stat(cli_dat_path).st_mode
+
+        result = run_cli(
+            "users", str(cli_dat_path), "passwd", "--user", "admin", "--password", "New456!"
+        )
+        assert result.returncode == 0
+        assert os.stat(cli_dat_path).st_mode == original_mode
+
+
 class TestCliVerify:
     """verify command tests."""
 

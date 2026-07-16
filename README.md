@@ -134,14 +134,18 @@ Exit code `0` means valid, `1` means errors found.
 Every mutating command follows a 7-step safety protocol:
 
 1. **Verify schema** -- required fields (`UserID`, `Enabled`, `Name`, `Password`, `RoleID`) must be present
-2. **Create backup** -- timestamped `.bak` file alongside the original
+2. **Create backup** -- timestamped `.bak` file alongside the original, with automatic pruning (keeps last 5)
 3. **Write temporary file** -- changes go to a temp file first
 4. **Re-read temporary file** -- parse the file we just wrote
 5. **Validate** -- check schema, duplicates, integrity
 6. **Atomic replace** -- `os.replace()` ensures no partial writes
-7. **Report** -- print the backup location
+7. **Preserve permissions** -- original file mode bits are restored after replace
 
 A malformed `.dat` file can prevent Rapid SCADA from starting. **Always verify before and after operations.**
+
+### Backup pruning
+
+By default, a maximum of **5 backup files** are kept per `.dat` file. Older backups are automatically deleted when this limit is exceeded. The backup filename format is `<name>.YYYYMMDD-HHMMSS.bak`.
 
 ## Limitations
 

@@ -84,6 +84,8 @@ def _safe_write(table: BaseTable, path: Path) -> None:
     """
     _require_user_table(table)
 
+    orig_mode = os.stat(path).st_mode
+
     backup_path = create_backup(path)
     print(f"Backup written to: {backup_path}", file=sys.stderr)
 
@@ -101,6 +103,7 @@ def _safe_write(table: BaseTable, path: Path) -> None:
             _die("Aborted — re-read validation failed after write.")
 
         os.replace(tmp, path)
+        os.chmod(path, orig_mode)
     except Exception:
         Path(tmp_path).unlink(missing_ok=True)
         raise

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rapidscada-admin"
-version = "1.0.1"
+version = "1.0.2"
 description = "Linux CLI for administering Rapid SCADA BaseDAT configuration files"
 readme = "README.md"
 license = "MIT"

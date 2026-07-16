@@ -1,4 +1,4 @@
-"""Tests for rapidscada_admin.backup — backup creation."""
+"""Tests for rapidscada_admin.backup — backup creation and pruning."""
 
 from __future__ import annotations
 
@@ -36,3 +36,28 @@ class TestCreateBackup:
     def test_backup_in_same_directory(self, user_dat_path: Path) -> None:
         backup = create_backup(user_dat_path)
         assert backup.parent == user_dat_path.parent
+
+
+class TestBackupPruning:
+    """Backup pruning tests."""
+
+    def test_prunes_oldest_when_exceeding_max(self, user_dat_path: Path) -> None:
+        for _ in range(7):
+            create_backup(user_dat_path, max_backups=3)
+            time.sleep(1.1)
+        backups = sorted(user_dat_path.parent.glob("user.dat.*.bak"))
+        assert len(backups) == 3
+
+    def test_keeps_all_when_under_limit(self, user_dat_path: Path) -> None:
+        for _ in range(3):
+            create_backup(user_dat_path, max_backups=5)
+            time.sleep(1.1)
+        backups = sorted(user_dat_path.parent.glob("user.dat.*.bak"))
+        assert len(backups) == 3
+
+    def test_max_zero_keeps_none(self, user_dat_path: Path) -> None:
+        create_backup(user_dat_path, max_backups=0)
+        time.sleep(1.1)
+        create_backup(user_dat_path, max_backups=0)
+        backups = list(user_dat_path.parent.glob("user.dat.*.bak"))
+        assert len(backups) == 0
